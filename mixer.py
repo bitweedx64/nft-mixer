@@ -1,6 +1,9 @@
 import os
+import time
+from PIL import Image
 
 imagePath = "./jigsaw"
+outputPath = "./output"
 
 categories = []
 files = []
@@ -47,14 +50,33 @@ def arrange(arr: list, layer: int):
 
     pictures = arr[layer]
     for picture in pictures:
-        # print(tmp)
         tmp[layer] = os.path.join(imagePath, categories[layer], picture)
         if layer < len(arr) - 1:
             arrange(arr, layer + 1)
         else:
-            print(tmp)
             result.append(tmp)
             count += 1
+
+def mix_files(arr: list, *args):
+    arr = arr.copy()
+    if len(args) > 0:
+        if len(arr) > 1:
+            new_image = Image.alpha_composite(args[0], Image.open(arr[0]))
+            arr.pop(0)
+            mix_files(arr, new_image)
+            return
+        if len(arr) == 1:
+            print(arr)
+            new_image = Image.alpha_composite(args[0], Image.open(arr[0]))
+            new_image.save(os.path.join(outputPath, "mix_" + str(time.time()) + ".png"))
+            arr.pop(0)
+            # new_image.show()
+            return
+    new_image = Image.alpha_composite(Image.open(arr[0]), Image.open(arr[1]))
+    arr.pop(0)
+    arr.pop(0)
+    mix_files(arr, new_image)
+    return
 
 
 scan_folders()
@@ -62,7 +84,7 @@ produce_files()
 initialize_tmp()
 arrange(files, 0)
 
-print(tmp)
-print(count)
+for item in result:
+    mix_files(item)
 
-# print(files)
+print('done')
